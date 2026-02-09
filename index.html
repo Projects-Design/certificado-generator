@@ -5,24 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Generador de Certificado</title>
 
-  <!-- EB Garamond -->
+  <!-- EB Garamond (Nombre) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
 
+  <!-- Montserrat (Fecha) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- html2pdf -->
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 
   <style>
     :root{
-      --page-w:1123px;
+      --page-w:1123px; /* A4 horizontal */
       --page-h:794px;
-      --radius:18px;
+
+      --bg:#0b0d10;
+      --card:rgba(255,255,255,.92);
+      --stroke:rgba(255,255,255,.14);
       --shadow:0 16px 40px rgba(0,0,0,.25);
+      --radius:18px;
     }
 
     *{ box-sizing:border-box; }
@@ -30,103 +35,156 @@
     body{
       margin:0;
       padding:20px;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:#0b0d10;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(255,255,255,.12), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(255,255,255,.08), transparent 60%),
+        var(--bg);
       color:#e9eef6;
     }
 
     .app{
       max-width:1100px;
-      margin:auto;
+      margin:0 auto;
       display:grid;
       grid-template-columns:380px 1fr;
       gap:18px;
+      align-items:start;
     }
 
     /* PANEL */
     .panel{
-      background:#fff;
-      color:#111;
+      background:var(--card);
+      color:#0f172a;
+      border:1px solid rgba(15, 23, 42, .08);
       border-radius:var(--radius);
       padding:16px;
       box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
       position:sticky;
       top:16px;
     }
 
     .panel h2{
-      margin:0 0 12px;
+      margin:0 0 10px;
       font-size:18px;
+      letter-spacing:.2px;
+    }
+
+    .muted{
+      margin:0 0 14px;
+      font-size:13px;
+      color:rgba(15, 23, 42, .65);
+      line-height:1.35;
     }
 
     label{
       font-size:12px;
-      margin:10px 0 6px;
+      color:rgba(15, 23, 42, .70);
       display:block;
+      margin:10px 0 6px;
     }
 
     input{
       width:100%;
-      padding:12px;
+      padding:12px 12px;
       border-radius:12px;
-      border:1px solid #ddd;
+      border:1px solid rgba(15, 23, 42, .12);
+      background:rgba(255,255,255,.85);
       font-size:14px;
+      outline:none;
+    }
+    input:focus{
+      border-color:rgba(15, 23, 42, .30);
+      box-shadow:0 0 0 4px rgba(15, 23, 42, .08);
     }
 
     .btnRow{
       display:flex;
       gap:10px;
-      margin-top:14px;
+      margin-top:12px;
     }
 
     button{
       flex:1;
-      padding:12px;
+      padding:12px 12px;
       border-radius:12px;
-      border:none;
-      background:#111;
+      border:1px solid rgba(15, 23, 42, .12);
+      background:#111827;
       color:#fff;
       font-size:14px;
       cursor:pointer;
+      transition: transform .06s ease, opacity .2s ease;
     }
+    button:hover{ opacity:.92; }
+    button:active{ transform: translateY(1px); }
 
     .btnGhost{
-      background:#e5e7eb;
-      color:#111;
+      background:rgba(15, 23, 42, .06);
+      color:#0f172a;
     }
 
     .status{
       margin-top:10px;
       font-size:12px;
-      color:#555;
+      color:rgba(15, 23, 42, .65);
+      min-height:18px;
     }
 
     /* PREVIEW */
-    .preview{
-      background:#111;
+    .previewCard{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
       border-radius:var(--radius);
       padding:12px;
       box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .previewHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .previewHeader h3{
+      margin:0;
+      font-size:14px;
+      font-weight:600;
+      letter-spacing:.2px;
+      color:#e9eef6;
+    }
+    .chip{
+      font-size:12px;
+      color:rgba(233,238,246,.75);
+      border:1px solid rgba(233,238,246,.18);
+      border-radius:999px;
+      padding:6px 10px;
+      background:rgba(255,255,255,.06);
     }
 
     .viewport{
       width:100%;
       overflow:auto;
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
       padding:10px;
     }
 
     #stage{
-      transform-origin:top left;
+      transform-origin:top left; /* se escala para ver en móvil */
     }
 
-    /* CERTIFICADO */
+    /* CERTIFICATE */
     #certificate{
       width:var(--page-w);
       height:var(--page-h);
       position:relative;
-      background:#fff;
-      border-radius:10px;
       overflow:hidden;
+      border-radius:10px;
+      background:#fff;
     }
 
     #certificate img{
@@ -135,22 +193,25 @@
       width:100%;
       height:100%;
       object-fit:cover;
+      z-index:1;
       pointer-events:none;
       user-select:none;
-      z-index:1;
     }
 
-    /* NOMBRE */
+    /* NOMBRE (EB Garamond Light Italic) */
     #nameText{
       position:absolute;
-      left:50%;
-      top:315px;
-      transform:translateX(-50%);
       z-index:2;
 
+      left:50%;
+      top:315px; /* ajusta si hace falta */
+      transform:translateX(-50%);
+
       font-family:"EB Garamond", serif;
+      font-optical-sizing:auto;
       font-style:italic;
       font-weight:400;
+
       font-size:56px;
       letter-spacing:.6px;
       color:#2a2a2a;
@@ -160,46 +221,48 @@
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
+      text-shadow:0 1px 0 rgba(255,255,255,.55);
     }
 
-    /* FECHA */
+    /* FECHA (Montserrat Medium) */
     #dateText{
-    position:absolute;
-    left:50%;
-    top:530px;                /* ajusta si necesitas */
-    transform:translateX(-50%);
-    z-index:2;
+      position:absolute;
+      z-index:2;
 
-    font-family: "Montserrat", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 500;         /* ✅ Medium */
-    font-style: normal;
+      left:50%;
+      top:490px; /* ajusta si hace falta */
+      transform:translateX(-50%);
 
-    font-size:21px;
-    color:#000000;
-    white-space:nowrap;
-}
+      font-family:"Montserrat", sans-serif;
+      font-optical-sizing:auto;
+      font-style:normal;
+      font-weight:500; /* Medium */
 
+      font-size:18px;
+      color:#2a2a2a;
+      white-space:nowrap;
+      text-align:center;
+    }
 
-    @media(max-width:980px){
+    @media (max-width:980px){
       .app{ grid-template-columns:1fr; }
-      .panel{ position:relative; }
+      .panel{ position:relative; top:0; }
     }
   </style>
 </head>
 
 <body>
   <div class="app">
-
     <!-- PANEL -->
     <div class="panel">
       <h2>Generar Certificado</h2>
+      <p class="muted">Escribe el nombre y la fecha, luego genera el PDF. En celular la vista previa se ajusta automáticamente.</p>
 
       <label>Nombre del alumno</label>
-      <input id="fullName" placeholder="Juan Manuel García López">
+      <input id="fullName" placeholder="Ej: Nicolás Sosa Calle" />
 
       <label>Fecha</label>
-      <input id="dateInput" value="Lima, 25 Enero del 2026">
+      <input id="dateInput" value="Lima, 9 de Febrero del 2026" />
 
       <div class="btnRow">
         <button id="btnPdf" type="button">Generar PDF</button>
@@ -210,93 +273,169 @@
     </div>
 
     <!-- PREVIEW -->
-    <div class="preview">
+    <div class="previewCard">
+      <div class="previewHeader">
+        <h3>Vista previa</h3>
+        <div class="chip">A4 · Horizontal</div>
+      </div>
+
       <div class="viewport" id="viewport">
         <div id="stage">
           <div id="certificate">
-            <img src="background.jpg" crossorigin="anonymous" alt="Certificado">
+            <img src="background.jpg" alt="Certificado" crossorigin="anonymous">
             <div id="nameText">Nombre Apellido</div>
-            <div id="dateText">Lima, 25 Enero del 2026</div>
+            <div id="dateText">Lima, 9 de Febrero del 2026</div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 
-<script>
-  const inputName = document.getElementById("fullName");
-  const inputDate = document.getElementById("dateInput");
-  const nameText = document.getElementById("nameText");
-  const dateText = document.getElementById("dateText");
-  const btnPdf = document.getElementById("btnPdf");
-  const btnFull = document.getElementById("btnFull");
-  const viewport = document.getElementById("viewport");
-  const stage = document.getElementById("stage");
-  const bgImg = document.querySelector("#certificate img");
-  const statusEl = document.getElementById("status");
+  <script>
+    const inputName = document.getElementById("fullName");
+    const inputDate = document.getElementById("dateInput");
+    const nameText = document.getElementById("nameText");
+    const dateText = document.getElementById("dateText");
+    const btnPdf = document.getElementById("btnPdf");
+    const btnFull = document.getElementById("btnFull");
+    const certEl = document.getElementById("certificate");
+    const bgImg = certEl.querySelector("img");
+    const viewport = document.getElementById("viewport");
+    const stage = document.getElementById("stage");
+    const statusEl = document.getElementById("status");
 
-  function clean(v){ return (v||"").trim().replace(/\s+/g," "); }
+    function setStatus(msg){ statusEl.textContent = msg || ""; }
 
-  function fitName(){
-    let size = 56;
-    nameText.style.fontSize = size+"px";
-    while(nameText.scrollWidth > nameText.clientWidth && size > 38){
-      size--;
-      nameText.style.fontSize = size+"px";
-    }
-  }
-
-  function scaleToFit(){
-    const scale = Math.min(1, viewport.clientWidth / 1123);
-    stage.style.transform = `scale(${scale})`;
-    stage.style.margin = scale < 1 ? "0 auto" : "0";
-  }
-
-  inputName.addEventListener("input", ()=>{
-    nameText.textContent = clean(inputName.value) || "—";
-    fitName();
-  });
-
-  inputDate.addEventListener("input", ()=>{
-    dateText.textContent = clean(inputDate.value) || "—";
-  });
-
-  btnFull.addEventListener("click", ()=>{
-    if(!document.fullscreenElement){
-      viewport.requestFullscreen();
-    }else{
-      document.exitFullscreen();
-    }
-  });
-
-  window.addEventListener("resize", scaleToFit);
-
-  btnPdf.addEventListener("click", async ()=>{
-    if(typeof html2pdf !== "function"){
-      alert("html2pdf no cargó");
-      return;
+    function clean(v){
+      return (v || "").trim().replace(/\s+/g, " ");
     }
 
-    nameText.textContent = clean(inputName.value) || "—";
-    dateText.textContent = clean(inputDate.value) || "—";
-    fitName();
+    function fitName(){
+      const base = 56;
+      const min = 38;
+      let size = base;
+      nameText.style.fontSize = base + "px";
 
-    statusEl.textContent = "Generando PDF...";
+      for(let i=0;i<30;i++){
+        if (nameText.scrollWidth <= nameText.clientWidth) break;
+        size--;
+        if (size <= min) break;
+        nameText.style.fontSize = size + "px";
+      }
+    }
 
-    await html2pdf().set({
-      margin:0,
-      filename:`Certificado_${nameText.textContent.replace(/\s+/g,"_")}.pdf`,
-      image:{ type:"jpeg", quality:0.98 },
-      html2canvas:{ scale:2, useCORS:true },
-      jsPDF:{ unit:"pt", format:"a4", orientation:"landscape" }
-    }).from(document.getElementById("certificate")).save();
+    function waitForImage(img){
+      return new Promise((resolve, reject) => {
+        if (!img) return resolve();
+        if (img.complete && img.naturalWidth > 0) return resolve();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("No se pudo cargar background.jpg (revisa nombre/ubicación)."));
+      });
+    }
 
-    statusEl.textContent = "PDF generado ✓";
-  });
+    function scaleToFit(){
+      const padding = 20;
+      const available = viewport.clientWidth - padding;
+      const scale = Math.min(1, available / 1123);
+      stage.style.transform = `scale(${scale})`;
+      stage.style.margin = scale < 1 ? "0 auto" : "0";
+    }
 
-  bgImg.onload = scaleToFit;
-</script>
+    window.addEventListener("resize", scaleToFit);
 
+    inputName.addEventListener("input", () => {
+      nameText.textContent = clean(inputName.value) || "—";
+      fitName();
+    });
+
+    inputDate.addEventListener("input", () => {
+      dateText.textContent = clean(inputDate.value) || "—";
+    });
+
+    btnFull.addEventListener("click", async () => {
+      try{
+        if (!document.fullscreenElement) await viewport.requestFullscreen();
+        else await document.exitFullscreen();
+      } catch(e){
+        alert("Tu navegador no permite pantalla completa aquí.");
+      }
+    });
+
+    (async () => {
+      setStatus("Cargando fondo...");
+      try { await waitForImage(bgImg); setStatus("Listo."); }
+      catch(e){ setStatus(e.message); }
+      scaleToFit();
+    })();
+
+    // ✅ EXPORT PDF (corrige el bug de móvil: PDF chico por el scale del preview)
+    btnPdf.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      if (typeof window.html2pdf !== "function") {
+        alert("html2pdf no cargó. Revisa tu internet o bloqueo del CDN.");
+        return;
+      }
+
+      try {
+        setStatus("Generando PDF...");
+
+        await waitForImage(bgImg);
+
+        nameText.textContent = clean(inputName.value) || "—";
+        dateText.textContent = clean(inputDate.value) || "—";
+        fitName();
+
+        // Guardar estado de preview
+        const prevTransform = stage.style.transform;
+        const prevMargin = stage.style.margin;
+        const prevScrollTop = viewport.scrollTop;
+        const prevScrollLeft = viewport.scrollLeft;
+
+        // Forzar tamaño real para captura
+        stage.style.transform = "scale(1)";
+        stage.style.margin = "0";
+        viewport.scrollTop = 0;
+        viewport.scrollLeft = 0;
+
+        // Esperar a que se aplique el layout
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        // En móviles baja un poco el scale para evitar recortes por memoria
+        const isMobile = window.matchMedia("(max-width: 980px)").matches;
+        const canvasScale = isMobile ? 1.5 : 2;
+
+        await window.html2pdf()
+          .set({
+            margin: 0,
+            filename: `Certificado_${nameText.textContent.replace(/\s+/g,"_")}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: {
+              scale: canvasScale,
+              useCORS: true,
+              windowWidth: 1123,
+              windowHeight: 794
+            },
+            jsPDF: { unit: "pt", format: "a4", orientation: "landscape" }
+          })
+          .from(certEl)
+          .save();
+
+        // Restaurar preview
+        stage.style.transform = prevTransform;
+        stage.style.margin = prevMargin;
+        viewport.scrollTop = prevScrollTop;
+        viewport.scrollLeft = prevScrollLeft;
+
+        setStatus("PDF generado ✅");
+        setTimeout(() => setStatus("Listo."), 1200);
+
+      } catch (err) {
+        console.error(err);
+        setStatus("Error generando PDF. Abre consola (F12) para ver detalles.");
+        alert("Error generando PDF. Mira consola (F12).");
+      }
+    });
+  </script>
 </body>
 </html>
