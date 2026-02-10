@@ -369,73 +369,69 @@
     })();
 
     // ✅ EXPORT PDF (corrige el bug de móvil: PDF chico por el scale del preview)
-    btnPdf.addEventListener("click", async (e) => {
-      e.preventDefault();
+btnPdf.addEventListener("click", async (e) => {
+  e.preventDefault();
 
-      if (typeof window.html2pdf !== "function") {
-        alert("html2pdf no cargó. Revisa tu internet o bloqueo del CDN.");
-        return;
-      }
+  if (typeof window.html2pdf !== "function") {
+    alert("html2pdf no cargó. Revisa tu internet o bloqueo del CDN.");
+    return;
+  }
 
-      try {
-        setStatus("Generando PDF...");
+  try {
+    setStatus("Generando PDF...");
 
-        await waitForImage(bgImg);
+    await waitForImage(bgImg);
 
-        nameText.textContent = clean(inputName.value) || "—";
-        dateText.textContent = clean(inputDate.value) || "—";
-        fitName();
+    // Actualiza textos
+    nameText.textContent = clean(inputName.value) || "—";
+    dateText.textContent = clean(inputDate.value) || "—";
+    fitName();
 
-        // Guardar estado de preview
-        const prevTransform = stage.style.transform;
-        const prevMargin = stage.style.margin;
-        const prevScrollTop = viewport.scrollTop;
-        const prevScrollLeft = viewport.scrollLeft;
+    // ✅ CLAVE: quitar scale del preview SOLO para capturar
+    const prevTransform = stage.style.transform;
+    const prevMargin = stage.style.margin;
+    stage.style.transform = "scale(1)";
+    stage.style.margin = "0";
 
-        // Forzar tamaño real para captura
-        stage.style.transform = "scale(1)";
-        stage.style.margin = "0";
-        viewport.scrollTop = 0;
-        viewport.scrollLeft = 0;
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-        // Esperar a que se aplique el layout
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const isMobile = window.matchMedia("(max-width: 980px)").matches;
+    const canvasScale = isMobile ? 1.25 : 2; // iPhone estable
 
-        // En móviles baja un poco el scale para evitar recortes por memoria
-        const isMobile = window.matchMedia("(max-width: 980px)").matches;
-        const canvasScale = isMobile ? 1.25 : 2;
+    // ✅ CLAVE: PDF con tamaño EXACTO del certificado (en px)
+    await window.html2pdf()
+      .set({
+        margin: 0,
+        filename: `Certificado_${nameText.textContent.replace(/\s+/g, "_")}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: canvasScale,
+          useCORS: true,
+          backgroundColor: "#ffffff"
+        },
+        jsPDF: {
+          unit: "px",
+          format: [1123, 794],     // <-- EXACTO al tamaño del certificado
+          orientation: "landscape"
+        }
+      })
+      .from(certEl)
+      .save();
 
-        await window.html2pdf()
-          .set({
-            margin: 0,
-            filename: `Certificado_${nameText.textContent.replace(/\s+/g,"_")}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: {
-              scale: canvasScale,
-              useCORS: true,
-              windowWidth: 1123,
-              windowHeight: 794
-            },
-            jsPDF: { unit: "pt", format: "a4", orientation: "landscape" }
-          })
-          .from(certEl)
-          .save();
+    // Restaurar preview
+    stage.style.transform = prevTransform;
+    stage.style.margin = prevMargin;
 
-        // Restaurar preview
-        stage.style.transform = prevTransform;
-        stage.style.margin = prevMargin;
-        viewport.scrollTop = prevScrollTop;
-        viewport.scrollLeft = prevScrollLeft;
+    setStatus("PDF generado ✅");
+    setTimeout(() => setStatus("Listo."), 1200);
 
-        setStatus("PDF generado ✅");
-        setTimeout(() => setStatus("Listo."), 1200);
+  } catch (err) {
+    console.error(err);
+    setStatus("Error generando PDF. Abre consola (F12) para ver detalles.");
+    alert("Error generando PDF. Mira consola (F12).");
+  }
+});
 
-      } catch (err) {
-        console.error(err);
-        setStatus("Error generando PDF. Abre consola (F12) para ver detalles.");
-        alert("Error generando PDF. Mira consola (F12).");
-      }
-    });
   </script>
 </body>
 </html>
