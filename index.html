@@ -369,25 +369,20 @@
     })();
 
     // ✅ EXPORT PDF (corrige el bug de móvil: PDF chico por el scale del preview)
-  btnPdf.addEventListener("click", async (e) => {
+btnPdf.addEventListener("click", async (e) => {
   e.preventDefault();
-
-  if (typeof window.html2pdf !== "function") {
-    alert("html2pdf no cargó. Revisa tu internet o bloqueo del CDN.");
-    return;
-  }
 
   try {
     setStatus("Generando PDF...");
 
     await waitForImage(bgImg);
 
-    // Actualiza textos
+    // Textos
     nameText.textContent = clean(inputName.value) || "—";
     dateText.textContent = clean(inputDate.value) || "—";
     fitName();
 
-    // ✅ Quitar el scale del preview SOLO para capturar (móvil lo necesita)
+    // Quitar scale del preview SOLO para capturar
     const prevTransform = stage.style.transform;
     const prevMargin = stage.style.margin;
     const prevScrollTop = viewport.scrollTop;
@@ -398,35 +393,43 @@
     viewport.scrollTop = 0;
     viewport.scrollLeft = 0;
 
-    // Espera a que el navegador aplique el cambio
+    // Espera 2 frames para que se aplique el layout
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
+    // iPhone: scale moderado para no romper por RAM
     const isMobile = window.matchMedia("(max-width: 980px)").matches;
-
-    // ✅ En iPhone: menor scale evita recortes y offsets
     const canvasScale = isMobile ? 1.25 : 2;
 
-    // ✅ PC puede seguir en A4; Móvil mejor en “px exacto”
-    const jsPdfConfig = isMobile
-      ? { unit: "px", format: [1123, 794], orientation: "landscape" }
-      : { unit: "pt", format: "a4", orientation: "landscape" };
+    // 1) CAPTURAR A IMAGEN (canvas)
+    const canvas = await window.html2canvas(certEl, {
+      scale: canvasScale,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false
+    });
 
-    await window.html2pdf()
-      .set({
-        margin: 0,
-        filename: `Certificado_${nameText.textContent.replace(/\s+/g, "_")}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: canvasScale,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          windowWidth: 1123,
-          windowHeight: 794
-        },
-        jsPDF: jsPdfConfig
-      })
-      .from(certEl)
-      .save();
+    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+    // 2) CREAR PDF A4 LANDSCAPE EN mm (esto evita el “blanco” en iPhone)
+    const jsPDFRef = window.jspdf?.jsPDF || window.jsPDF;
+    if (!jsPDFRef) {
+      alert("jsPDF no está disponible. (Debería venir en html2pdf.bundle)");
+      return;
+    }
+
+    const pdf = new jsPDFRef({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4"
+    });
+
+    const pageW = 297; // A4 landscape width in mm
+    const pageH = 210; // A4 landscape height in mm
+
+    // 3) PEGAR LA IMAGEN A PÁGINA COMPLETA (sin márgenes)
+    pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH, undefined, "FAST");
+
+    pdf.save(`Certificado_${nameText.textContent.replace(/\s+/g, "_")}.pdf`);
 
     // Restaurar preview
     stage.style.transform = prevTransform;
@@ -443,6 +446,7 @@
     alert("Error generando PDF. Mira consola (F12).");
   }
 });
+
 
 
   </script>
