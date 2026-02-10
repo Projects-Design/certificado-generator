@@ -403,7 +403,7 @@
 
         // En móviles baja un poco el scale para evitar recortes por memoria
         const isMobile = window.matchMedia("(max-width: 980px)").matches;
-        const canvasScale = isMobile ? 1.5 : 2;
+        const canvasScale = isMobile ? 1.25 : 2;
 
         await window.html2pdf()
           .set({
