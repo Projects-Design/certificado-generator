@@ -369,7 +369,7 @@
     })();
 
     // ✅ EXPORT PDF (corrige el bug de móvil: PDF chico por el scale del preview)
-btnPdf.addEventListener("click", async (e) => {
+  btnPdf.addEventListener("click", async (e) => {
   e.preventDefault();
 
   if (typeof window.html2pdf !== "function") {
@@ -387,18 +387,30 @@ btnPdf.addEventListener("click", async (e) => {
     dateText.textContent = clean(inputDate.value) || "—";
     fitName();
 
-    // ✅ CLAVE: quitar scale del preview SOLO para capturar
+    // ✅ Quitar el scale del preview SOLO para capturar (móvil lo necesita)
     const prevTransform = stage.style.transform;
     const prevMargin = stage.style.margin;
+    const prevScrollTop = viewport.scrollTop;
+    const prevScrollLeft = viewport.scrollLeft;
+
     stage.style.transform = "scale(1)";
     stage.style.margin = "0";
+    viewport.scrollTop = 0;
+    viewport.scrollLeft = 0;
 
+    // Espera a que el navegador aplique el cambio
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
     const isMobile = window.matchMedia("(max-width: 980px)").matches;
-    const canvasScale = isMobile ? 1.25 : 2; // iPhone estable
 
-    // ✅ CLAVE: PDF con tamaño EXACTO del certificado (en px)
+    // ✅ En iPhone: menor scale evita recortes y offsets
+    const canvasScale = isMobile ? 1.25 : 2;
+
+    // ✅ PC puede seguir en A4; Móvil mejor en “px exacto”
+    const jsPdfConfig = isMobile
+      ? { unit: "px", format: [1123, 794], orientation: "landscape" }
+      : { unit: "pt", format: "a4", orientation: "landscape" };
+
     await window.html2pdf()
       .set({
         margin: 0,
@@ -407,13 +419,11 @@ btnPdf.addEventListener("click", async (e) => {
         html2canvas: {
           scale: canvasScale,
           useCORS: true,
-          backgroundColor: "#ffffff"
+          backgroundColor: "#ffffff",
+          windowWidth: 1123,
+          windowHeight: 794
         },
-        jsPDF: {
-          unit: "px",
-          format: [1123, 794],     // <-- EXACTO al tamaño del certificado
-          orientation: "landscape"
-        }
+        jsPDF: jsPdfConfig
       })
       .from(certEl)
       .save();
@@ -421,6 +431,8 @@ btnPdf.addEventListener("click", async (e) => {
     // Restaurar preview
     stage.style.transform = prevTransform;
     stage.style.margin = prevMargin;
+    viewport.scrollTop = prevScrollTop;
+    viewport.scrollLeft = prevScrollLeft;
 
     setStatus("PDF generado ✅");
     setTimeout(() => setStatus("Listo."), 1200);
@@ -431,6 +443,7 @@ btnPdf.addEventListener("click", async (e) => {
     alert("Error generando PDF. Mira consola (F12).");
   }
 });
+
 
   </script>
 </body>
